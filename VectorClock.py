@@ -1,3 +1,14 @@
+USAGE = """Usage:
+  This script uses predefined vectors and task list.
+  Update the vectors and task_list variables before running.
+"""
+
+
+def print_usage(message="Invalid input."):
+    print(message)
+    print(USAGE)
+
+
 def update_vectors(vector_from, vector_to):
     updated_vector = vector_to
     for idx, (v_from, v_to) in enumerate(zip(vector_from, vector_to)):
@@ -6,7 +17,7 @@ def update_vectors(vector_from, vector_to):
     return updated_vector
 
 
-def solve_vector_clocks(task_list):
+def solve_vector_clocks(vectors, task_list):
     for i, tasks in enumerate(task_list):
         for task in tasks:
             if len(task) == 2:
@@ -20,12 +31,19 @@ def solve_vector_clocks(task_list):
         print(f"t{i + 1} {vectors}")
 
 
-if __name__ == '__main__':
+def main():
     # Fill in your start vector values
     vectors = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]  # Fill in
     # message = from to , event(increment) = x
     # Example: task_list = [["13", "2"], ["32"], ["21", "3"], ["31"]]
     task_list = [[]]  # Fill in
-    print(f"t0 {vectors}")
+    if not vectors or not task_list:
+        print_usage("Vectors and task_list must be set before running.")
+        return
 
-    solve_vector_clocks(task_list)
+    print(f"t0 {vectors}")
+    solve_vector_clocks(vectors, task_list)
+
+
+if __name__ == '__main__':
+    main()
