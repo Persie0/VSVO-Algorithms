@@ -1,3 +1,16 @@
+USAGE = """Usage:
+  Provide numeric inputs when prompted:
+  - Depth (integer >= 1)
+  - Node Amounts per Depth (integer >= 1)
+  - Start Node Identifier and End Node Identifier (string like 0.1.2)
+"""
+
+
+def print_usage(message="Invalid input."):
+    print(message)
+    print(USAGE)
+
+
 class Node:
     def __init__(self, identifier):
         self.identifier = identifier
@@ -112,9 +125,16 @@ def find_path_in_polyring(start_node, end_node):
     return path
 
 
-if __name__ == '__main__':
-    depth = int(input("Depth: "))
-    node_amount = int(input("Node Amounts per Depth: "))
+def main():
+    try:
+        depth = int(input("Depth: "))
+        node_amount = int(input("Node Amounts per Depth: "))
+        if depth < 1 or node_amount < 1:
+            raise ValueError("Depth and node amounts must be >= 1.")
+    except ValueError as exc:
+        print_usage(str(exc))
+        return
+
     graph = construct_graph(depth, node_amount)
 
     start_guid = input("Start Node Identifier: ")
@@ -134,3 +154,7 @@ if __name__ == '__main__':
             print(" -> ".join(path))
         else:
             print("No path found.")
+
+
+if __name__ == '__main__':
+    main()
