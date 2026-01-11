@@ -1,4 +1,4 @@
-from optional.RingAlgorithm import ring_election
+from scripts.RingAlgorithm import ring_election
 
 # Test: Ring with 5 processes, one crashed
 processes = [1, 3, 5, 7, 2]

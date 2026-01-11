@@ -19,7 +19,7 @@ Everything that has to be adapted in the code has a ````# Fill in```` in the sam
 
 <a name="berkeley"></a>
 
-## [Berkeley](https://github.com/ukalto/VSVO-Algorithms/blob/master/Berkeley.py)
+## [Berkeley](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/Berkeley.py)
 
 The Berkeley algorithm is a method of clock synchronisation in distributed computing which assumes no machine has an accurate time source.
 
@@ -27,7 +27,7 @@ The Berkeley algorithm is a method of clock synchronisation in distributed compu
 Every time has to be typed in the following format: 3:30pm = 1530 | 11:20am 1120
 
 <ol>
-    <li>Start the Berkeley.py program</li>
+    <li>Start the scripts/Berkeley.py program</li>
     <li>First type in how many servers exist</li>
     <li>Secondly type in the time for each server using the right time format explained above</li>
     <li>Thirdly type in which server should be the time daemon</li>
@@ -43,7 +43,7 @@ Every time has to be typed in the following format: 3:30pm = 1530 | 11:20am 1120
 
 <a name="chordSystem"></a>
 
-## [Chord System](https://github.com/ukalto/VSVO-Algorithms/blob/master/ChordSystem.py)
+## [Chord System](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/ChordSystem.py)
 
 In computing, Chord is a protocol and algorithm for a peer-to-peer distributed hash table.
 A distributed hash table stores key-value pairs by assigning keys to different computers (known as "nodes");
@@ -53,7 +53,7 @@ Chord specifies how keys are assigned to nodes, and how a node can discover the 
 ### How to use?
 
 <ol>
-    <li>Start the ChordSystem.py program</li>
+    <li>Start the scripts/ChordSystem.py program</li>
     <li>First you have to type in the amount of nodes which is saved in <b>"nodes_length"</b> (In the given Example it would be 32)</li>
     <li>Secondly you have to add the <b>"bid_id"</b> which is the bit identifier (In the given example it is represented by the length of each finger table which is 5)</li>
     <li>The first two steps are to create a working <b>Chord System</b>, however if you want to find a path from one node to another with a key the next two steps have to be typed in as well (If you don't want to create a path just let the <b>"start_node"</b> and <b>"key"</b> free by just pressing enter)</li>
@@ -70,7 +70,7 @@ Chord specifies how keys are assigned to nodes, and how a node can discover the 
 
 <a name="cryptoSystem"></a>
 
-## [Crypto System](https://github.com/ukalto/VSVO-Algorithms/blob/master/CryptoSystem.py)
+## [Crypto System](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/CryptoSystem.py)
 
 This Crypto System is just to send and receive messages from A(Sender) to B(Receiver), which consists of 3 factors:
 <ol>
@@ -82,7 +82,7 @@ This Crypto System is just to send and receive messages from A(Sender) to B(Rece
 ### How to use?
 
 <ol>
-    <li>Start the DiffieHellman.py program</li>
+    <li>Start the scripts/DiffieHellman.py program</li>
     <li>Type in the <b>Public Key of A = ka_pu</b></li>
     <li>Type in the <b>Private Key of A = ka_pr</b></li>
     <li>Type in the <b>Modules of A = na</b></li>
@@ -103,7 +103,7 @@ This Crypto System is just to send and receive messages from A(Sender) to B(Rece
 
 <a name="diffieHellman"></a>
 
-## [Diffie Hellman](https://github.com/ukalto/VSVO-Algorithms/blob/master/DiffieHellman.py)
+## [Diffie Hellman](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/DiffieHellman.py)
 
 Diffie–Hellman key exchange is a mathematical method of securely exchanging cryptographic keys over a public channel and was one of the first public-key
 protocols as conceived.
@@ -111,7 +111,7 @@ protocols as conceived.
 ### How to use?
 
 <ol>
-    <li>Start the DiffieHellman.py program</li>
+    <li>Start the scripts/DiffieHellman.py program</li>
     <li>Type in the <b>modulo value n</b> (in the example n is P)</li>
     <li>Type in the <b>base value g</b></li>
     <li>Type in the <b>a value</b></li>
@@ -128,13 +128,13 @@ protocols as conceived.
 
 <a name="greedyServerPlacement"></a>
 
-## [Greedy Server Placement](https://github.com/ukalto/VSVO-Algorithms/blob/master/GreedyServerPlacement.py)
+## [Greedy Server Placement](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/GreedyServerPlacement.py)
 
 ### How to use?
 
 <ol>
     <li>(in terminal) pip install requirements.txt</li>
-    <li>Start the GreedyServerPlacement.py program</li>
+    <li>Start the scripts/GreedyServerPlacement.py program</li>
     <li>Type in each value for the right client and latency</li>
 </ol>
 
@@ -146,7 +146,7 @@ protocols as conceived.
 
 <a name="lamportsLogicalClocks"></a>
 
-## [Lamport's Logical Clocks](https://github.com/ukalto/VSVO-Algorithms/blob/master/LamportsLogicalClocks.py)
+## [Lamport's Logical Clocks](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/LamportsLogicalClocks.py)
 
 The Lamport timestamp algorithm is a simple logical clock algorithm used to determine the order of events in a distributed computer system.
 As different nodes or processes will typically not be perfectly synchronized, this algorithm is used to provide a partial ordering of events with minimal overhead,
@@ -155,7 +155,7 @@ and conceptually provide a starting point for the more advanced vector clock met
 ### How to use?
 
 <ol>
-    <li>The first step is to fill in all messages by adapting the <b>"messages" array</b> in the LamportsLogicalClocks.py file (In the given example it would look like this <b>messages = [[1,2,2],[2,3,3],[2,1,6],[3,2,7]]</b>) 
+    <li>The first step is to fill in all messages by adapting the <b>"messages" array</b> in the scripts/LamportsLogicalClocks.py file (In the given example it would look like this <b>messages = [[1,2,2],[2,3,3],[2,1,6],[3,2,7]]</b>) 
         <ol>
             <li>case: [1,2,2]</li> 
             <li>The first number represents from which processor we are sending the message, the range is 1-processors, which in this case is P1(1)</li>
@@ -163,7 +163,7 @@ and conceptually provide a starting point for the more advanced vector clock met
             <li>The third number represents the row we are sending the number from the first given process, which in this case is 2</li>
         </ol>
     </li>
-    <li>Start the LamportsLogicalClocks.py program</li>
+    <li>Start the scripts/LamportsLogicalClocks.py program</li>
     <li>First you have to type in the amount of processors existing, which in this case would be 3</li>
     <li>Secondly you have to type in the amount of rows existing, which in this case would be 9</li>
     <li>Lastly just type in the number sequences for each processor, which in this case would be 5,8,10</li>
@@ -179,7 +179,7 @@ and conceptually provide a starting point for the more advanced vector clock met
 
 <a name="readWriteQuorums"></a>
 
-## [Read Write Quorums](https://github.com/ukalto/VSVO-Algorithms/blob/master/ReadWriteQuorums.py)
+## [Read Write Quorums](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/ReadWriteQuorums.py)
 
 Read-write quorums define two configurable parameters, R and W.
 R is the minimum number of nodes that must participate in a read operation, and W the minimum number of nodes that must participate in a write operation.
@@ -199,7 +199,7 @@ There are 2 main rules included in the system:
 ### How to use?
 
 <ol>
-    <li>Start the ReadWriteQuorums.py program</li>
+    <li>Start the scripts/ReadWriteQuorums.py program</li>
     <li>First enter the amount of numbers existing which is represented in the variable <b>n</b>, which in the example would be <b>12</b></li>
     <li>Secondly type in "1" if reading is important, if not just type in any other value</li>
 </ol>
@@ -215,7 +215,7 @@ There are 2 main rules included in the system:
 
 <a id="vectorClock"></a>
 
-## [Vector Clock](https://github.com/ukalto/VSVO-Algorithms/blob/master/VectorClock.py)
+## [Vector Clock](https://github.com/ukalto/VSVO-Algorithms/blob/master/scripts/VectorClock.py)
 
 A vector clock is a data structure used for determining the partial ordering of events in a distributed system and detecting causality violations. 
 Just as in Lamport timestamps, inter-process messages contain the state of the sending process's logical clock.
@@ -231,7 +231,7 @@ Just as in Lamport timestamps, inter-process messages contain the state of the s
         <li>If you want to add a message in the time step then the first number is <b>from</b> which clock <b>to</b> which clock, both from and to are in the range of 1-(amount of vectorClocks)</li>
         <li>If you want to add an e step which is an increment you just have to add the specific vector clock which starts from 1 upwards</li>
     </ul>
-    <li>Start the VectorClock.py program</li>
+    <li>Start the scripts/VectorClock.py program</li>
 </ol>
 
 ### Example:

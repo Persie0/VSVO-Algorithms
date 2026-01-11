@@ -5,7 +5,7 @@ designed for exam preparation based on **van Steen/Tanenbaum - Distributed Syste
 
 ---
 
-## 📁 Main Directory
+## 📁 Algorithms Directory (`scripts/`)
 
 | File | Algorithm | Topic | Book Section |
 |:-----|:----------|:------|:-------------|
@@ -18,13 +18,6 @@ designed for exam preparation based on **van Steen/Tanenbaum - Distributed Syste
 | `VectorClock.py` | Vector Clocks | Logical Clocks | §6.2 |
 | `ReadWriteQuorums.py` | Read/Write Quorums | Consistency | §7.3 |
 | `PolymorphPolyring.py` | Polymorph/Polyring | Naming | - |
-
----
-
-## 📁 Optional Directory (`optional/`)
-
-| File | Algorithm | Topic | Book Section |
-|:-----|:----------|:------|:-------------|
 | `BullyAlgorithm.py` | Bully Election | Leader Election | §6.4 |
 | `RingAlgorithm.py` | Ring Election | Leader Election | §6.4 |
 | `CristiansAlgorithm.py` | Cristian's Algorithm | Clock Sync | §6.1 |
@@ -45,9 +38,9 @@ designed for exam preparation based on **van Steen/Tanenbaum - Distributed Syste
 source venv/bin/activate  # Linux/Mac
 
 # Run any algorithm interactively
-python Berkeley.py
-python optional/BullyAlgorithm.py
-python optional/NTPAlgorithm.py
+python scripts/Berkeley.py
+python scripts/BullyAlgorithm.py
+python scripts/NTPAlgorithm.py
 ```
 
 ---

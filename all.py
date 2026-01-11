@@ -646,7 +646,7 @@ def vector_clock_main():
 
 
 # ============================================================================
-# OPTIONAL ALGORITHMS (from optional/ folder)
+# OPTIONAL ALGORITHMS (from scripts/ folder)
 # ============================================================================
 
 def bully_print_usage():
