@@ -607,42 +607,56 @@ def vector_clock_print_usage(message="Invalid input."):
     print(message)
     print(
         "Usage:\n"
-        "  This script uses predefined vectors and task list.\n"
-        "  Update the vectors and task_list variables before running."
+        "  1. Enter number of processes.\n"
+        "  2. Initialize vectors (y/n for zero-init).\n"
+        "  3. Enter tasks per time step (e.g., '1' for event, '12' for P1->P2 msg)."
     )
 
 
-def vector_clock_update_vectors(vector_from, vector_to):
-    updated_vector = vector_to
-    for idx, (v_from, v_to) in enumerate(zip(vector_from, vector_to)):
-        if v_from > v_to:
-            updated_vector[idx] = v_from
-    return updated_vector
-
-
-def vector_clock_solve_vector_clocks(vectors, task_list):
-    for i, tasks in enumerate(task_list):
-        for task in tasks:
-            if len(task) == 2:
-                v_from, v_to = int(task[0]) - 1, int(task[1]) - 1
-                vectors[v_from][v_from] += 1
-                vectors[v_to] = vector_clock_update_vectors(vectors[v_from], vectors[v_to])
-                vectors[v_to][v_to] += 1
-            else:
-                inc = int(task[0])
-                vectors[inc - 1][inc - 1] += 1
-        print(f"t{i + 1} {vectors}")
+def vector_clock_merge(v_local, v_remote):
+    return [max(l, r) for l, r in zip(v_local, v_remote)]
 
 
 def vector_clock_main():
-    vectors = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]  # Fill in
-    task_list = [[]]  # Fill in
-    if not vectors or not task_list:
-        vector_clock_print_usage("Vectors and task_list must be set before running.")
-        return
+    print("""
+╔══════════════════════════════════════════════════════════════════╗
+║                    VECTOR CLOCK SIMULATOR                        ║
+╚══════════════════════════════════════════════════════════════════╝
+""")
+    try:
+        num_procs = int(input("Number of processes: "))
+        vectors = []
+        if input("Initialize all to 0? (y/n): ").lower() == 'y':
+            vectors = [[0] * num_procs for _ in range(num_procs)]
+        else:
+            for i in range(num_procs):
+                v = [int(x) for x in input(f"VC{i+1}: ").split()]
+                vectors.append(v)
 
-    print(f"t0 {vectors}")
-    vector_clock_solve_vector_clocks(vectors, task_list)
+        num_steps = int(input("Number of time steps: "))
+        history = [ [v[:] for v in vectors] ]
+
+        for t in range(1, num_steps + 1):
+            tasks = input(f"t{t} tasks: ").split()
+            new_vectors = [v[:] for v in vectors]
+            for task in tasks:
+                if len(task) == 1:
+                    p = int(task) - 1
+                    new_vectors[p][p] += 1
+                elif len(task) == 2:
+                    src, dst = int(task[0]) - 1, int(task[1]) - 1
+                    new_vectors[src][src] += 1
+                    new_vectors[dst] = vector_clock_merge(new_vectors[dst], new_vectors[src])
+                    new_vectors[dst][dst] += 1
+            vectors = new_vectors
+            history.append([v[:] for v in vectors])
+
+        print("\nResults:")
+        headers = ["Step"] + [f"VC{i+1}" for i in range(num_procs)]
+        table = [[f"t{i}"] + [f"({','.join(map(str, v))})" for v in state] for i, state in enumerate(history)]
+        print(tabulate(table, headers=headers, tablefmt="grid"))
+    except Exception as e:
+        vector_clock_print_usage(str(e))
 
 
 # ============================================================================

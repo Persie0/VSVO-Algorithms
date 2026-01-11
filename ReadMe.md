@@ -223,15 +223,17 @@ Just as in Lamport timestamps, inter-process messages contain the state of the s
 ### How to use?
 
 <ol>
-    <li>Change the start values (<b>"vectors"</b> array), if they differ from yours or add more array entries to the list if you have more than 3 vector clocks</li>
-    <li>Fill in the <b>"task_list"</b> array</li>
-    <ul>
-        <li>Example for the given provided resource below: task_list = [["13", "2"], ["32"], ["21", "3"], ["31"]]</li>
-        <li>Each entry in the array is one time step and each time step has a list of execution commands, which are either an increment(one number) or a message(two numbers)</li>
-        <li>If you want to add a message in the time step then the first number is <b>from</b> which clock <b>to</b> which clock, both from and to are in the range of 1-(amount of vectorClocks)</li>
-        <li>If you want to add an e step which is an increment you just have to add the specific vector clock which starts from 1 upwards</li>
-    </ul>
     <li>Start the scripts/VectorClock.py program</li>
+    <li>Enter the number of processes (e.g., 3)</li>
+    <li>Choose whether to initialize all vectors to 0 (typing 'y') or provide custom start values</li>
+    <li>Enter the number of time steps you want to simulate</li>
+    <li>For each time step, enter the tasks as space-separated strings:
+        <ul>
+            <li><b>Internal Event:</b> Enter the process number (e.g., "1" for event in P1)</li>
+            <li><b>Message:</b> Enter source and destination (e.g., "13" for P1 sending to P3)</li>
+            <li><b>Example:</b> "1 23 2" means P1 event, P2 sends to P3, then P2 event in the same time step</li>
+        </ul>
+    </li>
 </ol>
 
 ### Example:
