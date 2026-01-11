@@ -1091,6 +1091,207 @@ Available domains:
         print(f"Error: {e}")
 
 
+def rpc_timing_single_call(
+    t_client: float,
+    t_server: float,
+    t_marshal: float,
+    t_network: float
+) -> tuple[float, list[tuple[str, float]]]:
+    """
+    Calculate the timing for a single RPC call.
+    
+    Args:
+        t_client: Time for client to prepare/compute arguments (ms)
+        t_server: Time for server to process and compute response (ms)
+        t_marshal: Time for marshalling/unmarshalling per operation (ms)
+        t_network: Time for network transmission one way (ms)
+        
+    Returns:
+        Tuple of (total_time, breakdown_steps)
+    """
+    steps = []
+    total = 0.0
+    
+    # Client prepares request
+    steps.append(("Client computes arguments", t_client))
+    total += t_client
+    
+    # Client stub marshals request
+    steps.append(("Client stub marshals request", t_marshal))
+    total += t_marshal
+    
+    # Network transmission to server
+    steps.append(("Network transmission (client → server)", t_network))
+    total += t_network
+    
+    # Server stub unmarshals request
+    steps.append(("Server stub unmarshals request", t_marshal))
+    total += t_marshal
+    
+    # Server processes request
+    steps.append(("Server processes request", t_server))
+    total += t_server
+    
+    # Server stub marshals response
+    steps.append(("Server stub marshals response", t_marshal))
+    total += t_marshal
+    
+    # Network transmission to client
+    steps.append(("Network transmission (server → client)", t_network))
+    total += t_network
+    
+    # Client stub unmarshals response
+    steps.append(("Client stub unmarshals response", t_marshal))
+    total += t_marshal
+    
+    return total, steps
+
+
+def calculate_rpc_timing(
+    t_client: float,
+    t_server: float,
+    t_marshal: float,
+    t_network: float,
+    num_requests: int = 1,
+    num_threads: int = 1
+) -> dict:
+    """
+    Main calculation function for RPC timing.
+    """
+    # Single call breakdown
+    single_time, single_steps = rpc_timing_single_call(t_client, t_server, t_marshal, t_network)
+    
+    result = {
+        "single_call_time": single_time,
+        "single_call_breakdown": single_steps,
+        "t_client": t_client,
+        "t_server": t_server,
+        "t_marshal": t_marshal,
+        "t_network": t_network,
+        "num_requests": num_requests,
+        "num_threads": num_threads,
+    }
+    
+    if num_threads == 1:
+        # Sequential processing
+        result["total_time"] = single_time * num_requests
+        result["mode"] = "sequential"
+    else:
+        # Parallel processing with server queueing
+        # Formula for n requests with parallel client threads:
+        # = t_client + t_marshal + t_network + n * (2*t_marshal + t_server) + t_network + t_marshal
+        parallel_time = (t_client + 
+                        t_marshal +  # Client marshal (parallel)
+                        t_network +  # To server
+                        num_requests * (2 * t_marshal + t_server) +  # Server chain
+                        t_network +  # Back to client
+                        t_marshal)   # Client unmarshal
+        
+        result["total_time"] = parallel_time
+        result["mode"] = "parallel"
+    
+    return result
+
+
+def rpc_main():
+    print("""
+╔══════════════════════════════════════════════════════════════════╗
+║                    RPC TIMING CALCULATOR                         ║
+║  Calculate synchronous Remote Procedure Call timing              ║
+╚══════════════════════════════════════════════════════════════════╝
+
+RPC Components:
+  • Client computation (t_client): Time to prepare request arguments
+  • Server processing (t_server): Time to process and compute response
+  • Marshalling/Unmarshalling (t_marshal): Time for stubs to serialize/deserialize
+  • Network transmission (t_network): Time for message to travel (one direction)
+""")
+    
+    try:
+        print("Enter timing parameters (in milliseconds):")
+        t_client = float(input("  Client computation time (t_client): "))
+        t_server = float(input("  Server processing time (t_server): "))
+        t_marshal = float(input("  Marshalling time per operation (t_marshal): "))
+        t_network = float(input("  Network transmission time one-way (t_network): "))
+        
+        num_requests = int(input("\nNumber of requests to make: "))
+        if num_requests < 1:
+            raise ValueError("Need at least 1 request.")
+        
+        num_threads = int(input("Number of client threads (1 for single-threaded): "))
+        if num_threads < 1:
+            raise ValueError("Need at least 1 thread.")
+        
+        # Calculate timing
+        result = calculate_rpc_timing(t_client, t_server, t_marshal, t_network, 
+                                      num_requests, num_threads)
+        
+        # Display single call breakdown
+        print("\n" + "="*60)
+        print("SINGLE RPC CALL BREAKDOWN")
+        print("="*60)
+        
+        table = [[step, f"{time:.1f} ms"] for step, time in result["single_call_breakdown"]]
+        table.append(["TOTAL", f"{result['single_call_time']:.1f} ms"])
+        print(tabulate(table, headers=["Step", "Time"], tablefmt="grid"))
+        
+        # Display formula
+        print(f"\nFormula: t_client + 4×t_marshal + 2×t_network + t_server")
+        print(f"       = {t_client} + 4×{t_marshal} + 2×{t_network} + {t_server}")
+        print(f"       = {t_client} + {4*t_marshal} + {2*t_network} + {t_server}")
+        print(f"       = {result['single_call_time']:.1f} ms")
+        
+        # Display multi-request results
+        print("\n" + "="*60)
+        print(f"TIMING FOR {num_requests} REQUEST(S)")
+        print("="*60)
+        
+        if num_threads == 1:
+            print(f"\nMode: SEQUENTIAL (single-threaded client)")
+            print(f"Each request must complete before the next starts.")
+            print(f"\nTotal time = {result['single_call_time']:.1f} × {num_requests} = {result['total_time']:.1f} ms")
+        else:
+            print(f"\nMode: PARALLEL ({num_threads} client threads)")
+            print(f"Client can prepare/send multiple requests simultaneously,")
+            print(f"but server processes them sequentially (single-threaded server).")
+            
+            print(f"\nTiming breakdown:")
+            print(f"  • Client prepares {min(num_threads, num_requests)} requests in parallel: {t_client} ms")
+            print(f"  • Client stubs marshal (parallel): {t_marshal} ms")
+            print(f"  • Network to server: {t_network} ms")
+            print(f"  • Server processes {num_requests} requests sequentially:")
+            print(f"      {num_requests} × (unmarshal + process + marshal)")
+            print(f"    = {num_requests} × ({t_marshal} + {t_server} + {t_marshal})")
+            print(f"    = {num_requests} × {2*t_marshal + t_server} = {num_requests * (2*t_marshal + t_server)} ms")
+            print(f"  • Network back to client: {t_network} ms")
+            print(f"  • Client stub unmarshals: {t_marshal} ms")
+            
+            print(f"\nTotal time = {result['total_time']:.1f} ms")
+        
+        # Compare sequential vs parallel
+        if num_threads > 1 and num_requests > 1:
+            sequential_time = result['single_call_time'] * num_requests
+            parallel_time = result['total_time']
+            savings = sequential_time - parallel_time
+            
+            print("\n" + "="*60)
+            print("COMPARISON")
+            print("="*60)
+            comparison_table = [
+                ["Sequential (1 thread)", f"{sequential_time:.1f} ms"],
+                [f"Parallel ({num_threads} threads)", f"{parallel_time:.1f} ms"],
+                ["Time savings", f"{savings:.1f} ms ({(savings/sequential_time)*100:.1f}%)"],
+            ]
+            print(tabulate(comparison_table, headers=["Mode", "Time"], tablefmt="grid"))
+        
+        print("\n" + "="*60)
+        print(f"===> ANSWER: {result['total_time']:.0f} ms")
+        print("="*60)
+        
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
 SCRIPTS = {
     "berkeley": ("Berkeley clock synchronization", berkeley_main),
     "chord": ("Chord finger table and lookup", chord_main),
@@ -1111,6 +1312,7 @@ SCRIPTS = {
     "3pc": ("Three-Phase Commit protocol", three_phase_commit_main),
     "paxos": ("Paxos consensus algorithm", paxos_main),
     "dns": ("DNS resolution (simplified)", dns_main),
+    "rpc": ("RPC timing calculator", rpc_main),
 }
 
 
