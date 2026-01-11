@@ -33,6 +33,7 @@ designed for exam preparation based on **van Steen/Tanenbaum - Distributed Syste
 | `ThreePhaseCommit.py` | Three-Phase Commit (3PC) | Fault Tolerance | §8.2 |
 | `PaxosAlgorithm.py` | Paxos Consensus | Consensus | §8.2 |
 | `DNSResolution.py` | DNS Resolution (Iterative/Recursive) | Naming | §5.3 |
+| `RPCTiming.py` | RPC Timing Calculator | Communication | §4.2 |
 
 ---
 
@@ -62,3 +63,4 @@ python optional/NTPAlgorithm.py
 | **Consistency & Replication (§7)** | Read/Write Quorums, Greedy Server Placement |
 | **Fault Tolerance (§8)** | 2PC, 3PC, Paxos |
 | **Security (§9)** | Diffie-Hellman, Crypto Ops |
+| **Communication (§4)** | RPC Timing |
