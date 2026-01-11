@@ -645,6 +645,452 @@ def vector_clock_main():
     vector_clock_solve_vector_clocks(vectors, task_list)
 
 
+# ============================================================================
+# OPTIONAL ALGORITHMS (from optional/ folder)
+# ============================================================================
+
+def bully_print_usage():
+    print("""
+Usage:
+  Enter process IDs (space-separated integers).
+  Specify which processes are alive (1) or crashed (0).
+  Specify which process initiates the election.
+""")
+
+
+def bully_election(processes: list[int], alive: list[bool], initiator: int) -> tuple[int, list[str]]:
+    steps = []
+    n = len(processes)
+    process_set = set(processes)
+    alive_map = {processes[i]: alive[i] for i in range(n)}
+    
+    if initiator not in process_set:
+        return -1, [f"Error: Initiator {initiator} not in process list."]
+    
+    if not alive_map[initiator]:
+        return -1, [f"Error: Initiator {initiator} is crashed and cannot start election."]
+    
+    election_queue = [initiator]
+    processed = set()
+    
+    while election_queue:
+        current = election_queue.pop(0)
+        if current in processed:
+            continue
+        processed.add(current)
+        
+        steps.append(f"Process {current} starts election.")
+        higher = [p for p in processes if p > current and alive_map[p]]
+        
+        if not higher:
+            steps.append(f"Process {current} receives no OK responses.")
+            steps.append(f"Process {current} becomes COORDINATOR and broadcasts to all.")
+            return current, steps
+        else:
+            steps.append(f"Process {current} sends ELECTION to: {higher}")
+            for h in higher:
+                steps.append(f"Process {h} responds OK to {current}.")
+            steps.append(f"Process {current} waits (a higher process will take over).")
+            election_queue.append(max(higher))
+    
+    return -1, steps
+
+
+def bully_main():
+    bully_print_usage()
+    try:
+        proc_input = input("Enter process IDs (space-separated, e.g., '1 2 3 4 5'): ")
+        processes = sorted([int(x) for x in proc_input.strip().split()])
+        
+        if len(processes) < 2:
+            raise ValueError("Need at least 2 processes.")
+        
+        print(f"\nProcesses: {processes}")
+        alive_input = input(f"Enter alive status for each process ({len(processes)} values, 1=alive, 0=crashed): ")
+        alive = [x == '1' for x in alive_input.strip().split()]
+        
+        if len(alive) != len(processes):
+            raise ValueError(f"Expected {len(processes)} alive values, got {len(alive)}.")
+        
+        table = [[processes[i], "Alive" if alive[i] else "Crashed"] for i in range(len(processes))]
+        print("\n" + tabulate(table, headers=["Process ID", "Status"], tablefmt="grid"))
+        
+        initiator = int(input("\nEnter the process ID that initiates the election: "))
+        coordinator, steps = bully_election(processes, alive, initiator)
+        
+        print("\n--- Election Steps ---")
+        for i, step in enumerate(steps, 1):
+            print(f"{i}. {step}")
+        
+        if coordinator != -1:
+            print(f"\n==> Elected Coordinator: Process {coordinator}")
+        else:
+            print("\n==> Election failed.")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+def ring_election(processes: list[int], alive: list[bool], initiator: int) -> tuple[int, list[str], list[int]]:
+    steps = []
+    n = len(processes)
+    
+    try:
+        init_idx = processes.index(initiator)
+    except ValueError:
+        return -1, [f"Error: Initiator {initiator} not in ring."], []
+    
+    if not alive[init_idx]:
+        return -1, [f"Error: Initiator {initiator} is crashed."], []
+    
+    election_list = [initiator]
+    steps.append(f"Process {initiator} starts election with message: {election_list}")
+    
+    current_idx = (init_idx + 1) % n
+    visited = 0
+    
+    while current_idx != init_idx and visited < n:
+        proc_id = processes[current_idx]
+        
+        if alive[current_idx]:
+            election_list.append(proc_id)
+            steps.append(f"Process {proc_id} adds itself -> message: {election_list}")
+        else:
+            steps.append(f"Process {proc_id} is crashed, skipping to next.")
+        
+        current_idx = (current_idx + 1) % n
+        visited += 1
+    
+    steps.append(f"Message returns to initiator {initiator}.")
+    coordinator = max(election_list)
+    steps.append(f"Highest ID in message: {coordinator}")
+    steps.append(f"Process {initiator} sends COORDINATOR({coordinator}) around the ring.")
+    
+    current_idx = (init_idx + 1) % n
+    visited = 0
+    while current_idx != init_idx and visited < n:
+        proc_id = processes[current_idx]
+        if alive[current_idx]:
+            steps.append(f"Process {proc_id} receives COORDINATOR({coordinator}).")
+        current_idx = (current_idx + 1) % n
+        visited += 1
+    
+    return coordinator, steps, election_list
+
+
+def ring_main():
+    print("""
+Usage:
+  Enter process IDs (space-separated integers) in ring order.
+  Specify which processes are alive (1) or crashed (0).
+  Specify which process initiates the election.
+""")
+    try:
+        proc_input = input("Enter process IDs in ring order (space-separated, e.g., '1 3 5 7 2'): ")
+        processes = [int(x) for x in proc_input.strip().split()]
+        
+        if len(processes) < 2:
+            raise ValueError("Need at least 2 processes.")
+        
+        print(f"\nRing order: {' -> '.join(map(str, processes))} -> {processes[0]} (cycle)")
+        alive_input = input(f"Enter alive status for each process ({len(processes)} values, 1=alive, 0=crashed): ")
+        alive = [x == '1' for x in alive_input.strip().split()]
+        
+        if len(alive) != len(processes):
+            raise ValueError(f"Expected {len(processes)} alive values, got {len(alive)}.")
+        
+        table = [[processes[i], "Alive" if alive[i] else "Crashed"] for i in range(len(processes))]
+        print("\n" + tabulate(table, headers=["Process ID", "Status"], tablefmt="grid"))
+        
+        initiator = int(input("\nEnter the process ID that initiates the election: "))
+        coordinator, steps, election_list = ring_election(processes, alive, initiator)
+        
+        print("\n--- Election Steps ---")
+        for i, step in enumerate(steps, 1):
+            print(f"{i}. {step}")
+        
+        if coordinator != -1:
+            print(f"\n==> Election List: {election_list}")
+            print(f"==> Elected Coordinator: Process {coordinator}")
+        else:
+            print("\n==> Election failed.")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+def cristians_algorithm(t_request: float, t_reply: float, t_server: float) -> tuple[float, float, float]:
+    rtt = t_reply - t_request
+    one_way_delay = rtt / 2
+    estimated_time = t_server + one_way_delay
+    return estimated_time, rtt, one_way_delay
+
+
+def cristians_main():
+    print("""
+Usage:
+  Enter the time when the request was sent (T_request).
+  Enter the time when the reply was received (T_reply).
+  Enter the server time included in the reply (T_server).
+""")
+    try:
+        t_request = float(input("Enter T_request (time when request was sent): "))
+        t_reply = float(input("Enter T_reply (time when reply was received): "))
+        t_server = float(input("Enter T_server (server time in the reply): "))
+        
+        if t_reply < t_request:
+            raise ValueError("T_reply must be >= T_request.")
+        
+        estimated_time, rtt, one_way_delay = cristians_algorithm(t_request, t_reply, t_server)
+        
+        print("\n--- Cristian's Algorithm Results ---")
+        print(f"T_request (client):     {t_request}")
+        print(f"T_reply (client):       {t_reply}")
+        print(f"T_server (from server): {t_server}")
+        print(f"RTT:                    {rtt}")
+        print(f"Estimated one-way delay: {one_way_delay}")
+        print(f"\n==> Estimated Current Time: {estimated_time}")
+        print(f"    (T_server + RTT/2 = {t_server} + {one_way_delay} = {estimated_time})")
+        
+        current_client_time = t_reply
+        adjustment = estimated_time - current_client_time
+        print(f"\n==> Clock Adjustment: {adjustment:+}")
+        if adjustment > 0:
+            print("    (Client clock is behind; advance it)")
+        elif adjustment < 0:
+            print("    (Client clock is ahead; slow it down)")
+        else:
+            print("    (Clocks are synchronized)")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+def ntp_algorithm(t1: float, t2: float, t3: float, t4: float) -> tuple[float, float]:
+    theta = ((t2 - t1) + (t3 - t4)) / 2
+    delta = (t4 - t1) - (t3 - t2)
+    return theta, delta
+
+
+def ntp_main():
+    print("""
+Usage:
+  Enter the four NTP timestamps:
+    T1 = Time client sends request (client clock)
+    T2 = Time server receives request (server clock)
+    T3 = Time server sends reply (server clock)
+    T4 = Time client receives reply (client clock)
+""")
+    try:
+        t1 = float(input("Enter T1 (client sends request): "))
+        t2 = float(input("Enter T2 (server receives request): "))
+        t3 = float(input("Enter T3 (server sends reply): "))
+        t4 = float(input("Enter T4 (client receives reply): "))
+        
+        theta, delta = ntp_algorithm(t1, t2, t3, t4)
+        
+        print("\n--- NTP Algorithm Results ---")
+        print(f"T1 (client -> server): {t1}")
+        print(f"T2 (server receives):  {t2}")
+        print(f"T3 (server -> client): {t3}")
+        print(f"T4 (client receives):  {t4}")
+        
+        print(f"\n--- Calculations ---")
+        print(f"(T2 - T1) = {t2} - {t1} = {t2 - t1}")
+        print(f"(T3 - T4) = {t3} - {t4} = {t3 - t4}")
+        print(f"θ = ((T2-T1) + (T3-T4)) / 2 = ({t2-t1} + {t3-t4}) / 2 = {theta}")
+        
+        print(f"\n(T4 - T1) = {t4} - {t1} = {t4 - t1}")
+        print(f"(T3 - T2) = {t3} - {t2} = {t3 - t2}")
+        print(f"δ = (T4-T1) - (T3-T2) = {t4-t1} - {t3-t2} = {delta}")
+        
+        print(f"\n==> Offset (θ): {theta:+}")
+        if theta > 0:
+            print("    Client clock is BEHIND server; advance client clock.")
+        elif theta < 0:
+            print("    Client clock is AHEAD of server; slow down client clock.")
+        else:
+            print("    Clocks are synchronized.")
+        
+        print(f"\n==> Round-trip Delay (δ): {delta}")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+def two_phase_commit(votes: list[bool]) -> tuple[str, list[str]]:
+    steps = []
+    n = len(votes)
+    
+    steps.append("=== PHASE 1: VOTE REQUEST ===")
+    steps.append("Coordinator sends VOTE_REQUEST to all participants.")
+    
+    for i, vote in enumerate(votes):
+        vote_str = "COMMIT" if vote else "ABORT"
+        steps.append(f"  Participant P{i+1} votes: {vote_str}")
+    
+    steps.append("")
+    steps.append("=== PHASE 2: DECISION ===")
+    
+    if all(votes):
+        decision = "GLOBAL_COMMIT"
+        steps.append("All participants voted COMMIT.")
+        steps.append(f"Coordinator decides: {decision}")
+        steps.append(f"Coordinator sends {decision} to all participants.")
+        for i in range(n):
+            steps.append(f"  Participant P{i+1} commits the transaction.")
+    else:
+        decision = "GLOBAL_ABORT"
+        abort_participants = [f"P{i+1}" for i, v in enumerate(votes) if not v]
+        steps.append(f"Participant(s) {', '.join(abort_participants)} voted ABORT.")
+        steps.append(f"Coordinator decides: {decision}")
+        steps.append(f"Coordinator sends {decision} to all participants.")
+        for i in range(n):
+            steps.append(f"  Participant P{i+1} aborts the transaction.")
+    
+    steps.append("")
+    steps.append("=== ACKNOWLEDGMENT ===")
+    for i in range(n):
+        steps.append(f"  Participant P{i+1} sends ACK to Coordinator.")
+    steps.append("Coordinator: Transaction complete.")
+    
+    return decision, steps
+
+
+def two_phase_commit_main():
+    print("""
+Usage:
+  Enter the number of participants.
+  Specify each participant's vote: COMMIT (1) or ABORT (0).
+""")
+    try:
+        n = int(input("Enter number of participants: "))
+        if n < 1:
+            raise ValueError("Need at least 1 participant.")
+        
+        vote_input = input(f"Enter votes for {n} participants (1=COMMIT, 0=ABORT, space-separated): ")
+        votes = [x == '1' for x in vote_input.strip().split()]
+        
+        if len(votes) != n:
+            raise ValueError(f"Expected {n} votes, got {len(votes)}.")
+        
+        table = [[f"P{i+1}", "COMMIT" if votes[i] else "ABORT"] for i in range(n)]
+        print("\n" + tabulate(table, headers=["Participant", "Vote"], tablefmt="grid"))
+        
+        decision, steps = two_phase_commit(votes)
+        
+        print("\n--- 2PC Protocol Execution ---")
+        for step in steps:
+            print(step)
+        
+        print(f"\n==> Final Decision: {decision}")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+def three_phase_commit_main():
+    print("""
+Usage:
+  Enter the number of participants.
+  Specify each participant's vote: COMMIT (1) or ABORT (0).
+  3PC adds a PRE-COMMIT phase to avoid blocking.
+""")
+    try:
+        n = int(input("Enter number of participants: "))
+        if n < 1:
+            raise ValueError("Need at least 1 participant.")
+        
+        vote_input = input(f"Enter votes for {n} participants (1=COMMIT, 0=ABORT, space-separated): ")
+        votes = [x == '1' for x in vote_input.strip().split()]
+        
+        if len(votes) != n:
+            raise ValueError(f"Expected {n} votes, got {len(votes)}.")
+        
+        table = [[f"P{i+1}", "COMMIT" if votes[i] else "ABORT"] for i in range(n)]
+        print("\n" + tabulate(table, headers=["Participant", "Vote"], tablefmt="grid"))
+        
+        # Simplified 3PC - just show the extra phase
+        print("\n--- 3PC Protocol Execution ---")
+        print("=== PHASE 1: VOTE REQUEST ===")
+        for i in range(n):
+            print(f"  Participant P{i+1} votes: {'COMMIT' if votes[i] else 'ABORT'}")
+        
+        if all(votes):
+            print("\n=== PHASE 2: PRE-COMMIT ===")
+            print("Coordinator sends PRE_COMMIT to all participants.")
+            for i in range(n):
+                print(f"  Participant P{i+1} acknowledges PRE_COMMIT.")
+            
+            print("\n=== PHASE 3: GLOBAL COMMIT ===")
+            print("Coordinator sends GLOBAL_COMMIT to all participants.")
+            for i in range(n):
+                print(f"  Participant P{i+1} commits the transaction.")
+            print("\n==> Final Decision: GLOBAL_COMMIT")
+        else:
+            print("\n==> Final Decision: GLOBAL_ABORT")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+def paxos_main():
+    print("""
+Usage:
+  Simulate a Paxos consensus round.
+  Enter the number of acceptors and proposal details.
+""")
+    try:
+        num_acceptors = int(input("Enter number of acceptors (e.g., 3 or 5): "))
+        if num_acceptors < 1:
+            raise ValueError("Need at least 1 acceptor.")
+        
+        proposal_n = int(input("Enter proposal number (unique integer): "))
+        proposal_v = input("Enter proposed value (any string): ").strip()
+        
+        majority = num_acceptors // 2 + 1
+        print(f"\n--- Paxos Simulation ---")
+        print(f"Acceptors: {num_acceptors}, Majority: {majority}")
+        print(f"Proposal: n={proposal_n}, v='{proposal_v}'")
+        
+        print("\n=== PHASE 1: PREPARE ===")
+        print(f"Proposer sends PREPARE({proposal_n}) to all acceptors.")
+        print(f"All {num_acceptors} acceptors send PROMISE.")
+        
+        print("\n=== PHASE 2: ACCEPT ===")
+        print(f"Proposer sends ACCEPT({proposal_n}, '{proposal_v}').")
+        print(f"All {num_acceptors} acceptors ACCEPT the proposal.")
+        
+        print(f"\n==> Consensus ACHIEVED on value: '{proposal_v}'")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+def dns_main():
+    print("""
+DNS Resolution Simulation
+Available domains:
+  - google.com, www.google.com
+  - tuwien.ac.at, www.tuwien.ac.at, tuwel.tuwien.ac.at
+""")
+    try:
+        domain = input("Enter domain to resolve: ").strip()
+        
+        # Simplified DNS lookup
+        dns_db = {
+            "google.com.": "142.250.185.46",
+            "www.google.com.": "142.250.185.68",
+            "tuwien.ac.at.": "128.130.0.1",
+            "www.tuwien.ac.at.": "128.130.0.2",
+            "tuwel.tuwien.ac.at.": "128.130.0.10",
+        }
+        
+        if not domain.endswith('.'):
+            domain += '.'
+        domain = domain.lower()
+        
+        if domain in dns_db:
+            print(f"\n==> RESOLVED: {domain} -> {dns_db[domain]}")
+        else:
+            print(f"\n==> FAILED: Could not resolve '{domain}'")
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
 SCRIPTS = {
     "berkeley": ("Berkeley clock synchronization", berkeley_main),
     "chord": ("Chord finger table and lookup", chord_main),
@@ -656,7 +1102,17 @@ SCRIPTS = {
     "polyring": ("Polymorph polyring routing", polyring_main),
     "read-write": ("Read/write quorum selection", read_write_main),
     "vector-clock": ("Vector clock simulation", vector_clock_main),
+    # Optional algorithms
+    "bully": ("Bully election algorithm", bully_main),
+    "ring": ("Ring election algorithm", ring_main),
+    "cristians": ("Cristian's clock synchronization", cristians_main),
+    "ntp": ("NTP clock synchronization", ntp_main),
+    "2pc": ("Two-Phase Commit protocol", two_phase_commit_main),
+    "3pc": ("Three-Phase Commit protocol", three_phase_commit_main),
+    "paxos": ("Paxos consensus algorithm", paxos_main),
+    "dns": ("DNS resolution (simplified)", dns_main),
 }
+
 
 
 def print_usage():
