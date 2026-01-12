@@ -50,19 +50,26 @@ def start_app():
     return servers, servers[time_daemon]
 
 
-def convert_seconds(time):
-    m, s = divmod(abs(time), 60)
-    h, m = divmod(m, 60)
-    sign = " "
+def convert_seconds(time, show_sign=False):
+    sign = ""
     if time < 0:
         sign = "-"
-    return f"{sign}{int(h):02d}:{int(m):02d}:{int(s):02d}"
+        time = abs(time)
+    elif show_sign:
+        sign = "+"
+    
+    m, s = divmod(int(time), 60)
+    h, m = divmod(m, 60)
+    
+    if h > 0:
+        return f"{sign}{h:02d}:{m:02d}"
+    return f"{sign}00:{m:02d}"
 
 
 def round_one(servers, time_daemon):
     print("\nRound 1")
     for s in servers:
-        print(f"{time_daemon.name} {s.name}: {convert_seconds(s.time)}")
+        print(f"{time_daemon.name} to {s.name}: {convert_seconds(time_daemon.time)}")
 
 
 def round_two(servers, time_daemon):
@@ -70,7 +77,7 @@ def round_two(servers, time_daemon):
     differences = []
     for s in servers:
         diff = s.time - time_daemon.time
-        print(f"{s.name} to {time_daemon.name}: {convert_seconds(diff)}")
+        print(f"{s.name} to {time_daemon.name}: {convert_seconds(diff, show_sign=True)}")
         differences.append(diff)
     return differences
 
@@ -80,7 +87,7 @@ def round_three(servers, time_differences, time_daemon):
     avg = sum(time_differences) / len(time_differences)
     for s in servers:
         diff = time_daemon.time + avg - s.time
-        print(f"{time_daemon.name} to {s.name}: {convert_seconds(diff)} | Final Time: {convert_seconds(s.time + diff)}")
+        print(f"{time_daemon.name} to {s.name}: {convert_seconds(diff, show_sign=True)} | Final Time: {convert_seconds(s.time + diff)}")
 
 
 def main():
